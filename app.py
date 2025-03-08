@@ -18,12 +18,22 @@ logging.basicConfig(
 IPINFO_TOKEN = 'a80f59fde431ea'
 
 def get_location(ip):
-    """Fetch location details using the IPinfo API."""
+    """Fetch location and privacy details using the IPinfo API."""
     try:
         logging.info(f"Fetching location for IP: {ip}")  # Log to console and file
         response = requests.get(f'https://ipinfo.io/{ip}?token={IPINFO_TOKEN}')
         data = response.json()
         logging.info(f"Location data: {data}")  # Log to console and file
+        
+        # Check if the IP is a VPN, proxy, or Tor
+        if 'privacy' in data:
+            if data['privacy'].get('vpn', False):
+                data['vpn'] = True
+            if data['privacy'].get('proxy', False):
+                data['proxy'] = True
+            if data['privacy'].get('tor', False):
+                data['tor'] = True
+        
         return data
     except Exception as e:
         logging.error(f"Error fetching location: {e}")  # Log to console and file
@@ -34,11 +44,25 @@ def index():
     # Get the user's IP address
     user_ip = request.remote_addr
     logging.info(f"User IP: {user_ip}")  # Log to console and file
-    # Get location details
+    
+    # Get location and privacy details
     location = get_location(user_ip)
-    # Log the IP address and location
+    
+    # Log the IP address, location, and privacy details
     logging.info(f"Logged IP: {user_ip}, Location: {location}")  # Log to console and file
-    return f"Hello! Your IP has been logged. Location: {location}"
+    
+    # Prepare the response message
+    response_message = f"Hello! Your IP has been logged. Location: {location}"
+    
+    # Add VPN/proxy/Tor information to the response
+    if location.get('vpn', False):
+        response_message += "\nYou are using a VPN."
+    if location.get('proxy', False):
+        response_message += "\nYou are using a proxy."
+    if location.get('tor', False):
+        response_message += "\nYou are using Tor."
+    
+    return response_message
 
 if __name__ == '__main__':
     logging.info("Starting the IP logger...")  # Log to console and file
