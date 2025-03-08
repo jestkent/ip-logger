@@ -41,8 +41,10 @@ def get_location(ip):
 
 @app.route('/')
 def index():
-    # Get the user's IP address
-    user_ip = request.remote_addr
+    # Get the user's real IP address from the X-Forwarded-For header
+    user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    if ',' in user_ip:
+        user_ip = user_ip.split(',')[0].strip()  # Handle multiple IPs in the header
     logging.info(f"User IP: {user_ip}")  # Log to console and file
     
     # Get location and privacy details
